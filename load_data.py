@@ -2,6 +2,7 @@ import numpy as np
 import cv2 
 from helper import normalize_batch
 from tensorflow.examples.tutorials.mnist import input_data
+# from tflearn.datasets import cifar10
 
 class DataLoaderCIFAR:
     def __init__(self):
@@ -11,7 +12,7 @@ class DataLoaderCIFAR:
     def get_data_size(self):
         res = 0
         for file_name in self.file_to_data_dict.keys():
-            res += self.file_to_data_dict[file_name].shape[0]
+            res += self.file_to_data_dict[file_name]['data'].shape[0]
         return res
     
     def unpickle(self, file):

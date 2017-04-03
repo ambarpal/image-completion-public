@@ -40,6 +40,7 @@ def discriminator(x):
                             kernel_size=5, strides=2, padding="same", activation=None, name="conv4",kernel_initializer = tf.contrib.layers.xavier_initializer())
     conv4_normed = lrelu(tf.layers.batch_normalization(inputs=conv4, name="conv4_normed"))
     
-    prob = tf.layers.dense(inputs=tf.reshape(conv4_normed, [-1, 4*4*512]), units=1, activation=tf.nn.sigmoid, name="prob",kernel_initializer = tf.contrib.layers.xavier_initializer())
+    prob_raw = tf.layers.dense(inputs=tf.reshape(conv4_normed, [-1, 4*4*512]), units=1, activation=None, name="prob",kernel_initializer = tf.contrib.layers.xavier_initializer())
+    prob = tf.nn.sigmoid(prob_raw)
     
-    return prob
+    return prob_raw, prob
