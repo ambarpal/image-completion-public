@@ -3,6 +3,8 @@ import load_data
 from models import generator, discriminator
 import numpy as np
 import cv2
+from helper import d3_scale
+import pdb
 
 if __name__ == '__main__':
     X = tf.placeholder(tf.float32, shape = [None, 64, 64, 3])
@@ -40,8 +42,8 @@ if __name__ == '__main__':
     
     saver = tf.train.Saver()
     sess = tf.Session()
-    saver = tf.train.import_meta_graph('snapshots/it_4200.ckpt.meta')
-    saver.restore(sess, 'snapshots/it_4200.ckpt')
+    saver = tf.train.import_meta_graph('snapshots/it_30000.ckpt.meta')
+    saver.restore(sess, 'snapshots/it_30000.ckpt')
     
     _, cost_disc = sess.run(fetches = [train_op_disc, loss_disc], feed_dict = {X:X_feed, Z:Z_feed})
     print "D %f" % cost_disc
@@ -54,5 +56,7 @@ if __name__ == '__main__':
     print im_score
     
     im_sqz = np.squeeze(np.asarray(im))
+    im_sqz = d3_scale(im_sqz, out_range=(0, 255))
     cv2.imwrite('analysis/mnist_test.png', im_sqz)
+    pdb.set_trace()
     # print im_sqz
