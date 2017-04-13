@@ -12,6 +12,8 @@ tf.set_random_seed(811)
 if __name__ == '__main__':
     X = tf.placeholder(tf.float32, shape = [None, 64, 64, 3])
     Z = tf.placeholder(tf.float32, shape = [None, 100])
+    labels_d_fake = tf.placeholder(tf.float32)
+    labels_d_real = tf.placeholder(tf.float32)
     
     # Do not set scopes with the loss as a name as we need to share the discriminator instead
     # of making multiple copies
@@ -25,8 +27,8 @@ if __name__ == '__main__':
         DX_raw, DX = discriminator(X)
     
     with tf.variable_scope("loss_calculation"):
-        loss_d_fake = tf.nn.sigmoid_cross_entropy_with_logits(labels=tf.zeros_like(DGZ_raw), logits=DGZ_raw)
-        loss_d_real = tf.nn.sigmoid_cross_entropy_with_logits(labels=tf.ones_like(DX_raw), logits=DX_raw)
+        loss_d_fake = tf.nn.sigmoid_cross_entropy_with_logits(labels=labels_d_fake, logits=DGZ_raw)
+        loss_d_real = tf.nn.sigmoid_cross_entropy_with_logits(labels=labels_d_real, logits=DX_raw)
         loss_g = tf.nn.sigmoid_cross_entropy_with_logits(labels=tf.ones_like(DGZ_raw), logits=DGZ_raw)
         loss_disc = tf.reduce_mean(loss_d_fake + loss_d_real)
         loss_gen = tf.reduce_mean(loss_g)
@@ -53,13 +55,14 @@ if __name__ == '__main__':
         num_disc_steps = 1
         batch_size = 128
         save_checkpoint_every = 2500
-        generate_samples_every = 250
+        generate_samples_every = 10
+    flip_alpha = 0.3
     
     saver = tf.train.Saver(max_to_keep=2)
     
     with tf.Session() as sess:
-        saver = tf.train.import_meta_graph('saved_analysis_snapshots/snapshots_cifar_complete_from_60_epoch/it_2500.ckpt.meta')
-        saver.restore(sess, 'saved_analysis_snapshots/snapshots_cifar_complete_from_60_epoch/it_2500.ckpt')
+        saver = tf.train.import_meta_graph('saved_analysis_snapshots/snapshots_cifar_complete_from_60_epoch_G_twice/it_2500.ckpt.meta')
+        saver.restore(sess, 'saved_analysis_snapshots/snapshots_cifar_complete_from_60_epoch_G_twice/it_2500.ckpt')
         
         # sess.run(tf.global_variables_initializer())
         num_train_iter = num_train_epochs * (data_size / (batch_size * num_disc_steps))
@@ -72,7 +75,9 @@ if __name__ == '__main__':
             for disc_step in range(num_disc_steps):
                 X_feed = loader.load_batch_X(batch_size)
                 Z_feed = loader.load_batch_Z(batch_size)
-                _, cost_disc, DGZ_ret, DX_ret = sess.run(fetches = [train_op_disc, loss_disc, DGZ, DX], feed_dict = {X:X_feed, Z:Z_feed})
+                labels_d_real_feed = np.random.choice([0, 1], size=(batch_size,), p=[flip_alpha, 1-flip_alpha])
+                labels_d_fake_feed = np.ones_like(labels_d_real_feed) - labels_d_real_feed
+                _, cost_disc, DGZ_ret, DX_ret = sess.run(fetches = [train_op_disc, loss_disc, DGZ, DX], feed_dict = {X:X_feed, Z:Z_feed, labels_d_fake: labels_d_fake_feed, labels_d_real:labels_d_real_feed})
                 sum_d_loss += cost_disc
                 num_d_loss += 1
                 # print ("#%d D #%d\tLossD:%f\tAvgD:%f\tDGZ:%f\tDX:%f" % ((iteration * batch_size * num_disc_steps) / data_size , iteration, cost_disc, sum_d_loss * 1.0 / num_d_loss, np.mean(DGZ_ret), np.mean(DX_ret)))  
