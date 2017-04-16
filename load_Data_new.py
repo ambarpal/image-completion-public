@@ -2,6 +2,7 @@ import numpy as np
 import cv2 
 from helper import normalize_batch
 from tensorflow.examples.tutorials.mnist import input_data
+import pdb
 
 class DataLoader:
     def __init__(self, dataset_name='MNIST'):
@@ -9,6 +10,7 @@ class DataLoader:
         if(dataset_name == 'MNIST'):
             self.dataset = input_data.read_data_sets("data/MNIST/")
             self.data = self.dataset.train.images
+            self.labels = np.array(self.dataset.train.labels)
             self.data = self.data.reshape(-1,28,28)
             temp = np.zeros((self.data.shape[0],3,28,28))
             for i in range(3):
@@ -17,8 +19,11 @@ class DataLoader:
             
         if(dataset_name == 'CIFAR10'):
             self.data = np.empty((0,3072))
+            self.labels = np.empty((0))
             for i in range(1,6):
-                self.data = np.append(self.data, self.unpickle('data/CIFAR/cifar-10-batches-py/data_batch_%d'% i)['data'],axis =0)         
+                unpickled = self.unpickle('data/CIFAR/cifar-10-batches-py/data_batch_%d'% i)
+                self.data = np.append(self.data, unpickled['data'],axis=0)
+                self.labels = np.append(self.labels, np.asarray(unpickled['labels']))
             self.data = self.data.reshape(-1,3,32,32)
         print "pre processing data..."
         print "loaded data:", self.data.shape
@@ -29,9 +34,18 @@ class DataLoader:
             temp[index] = cv2.resize(img_swapped[index], None, fx = 64.0/img_swapped.shape[1], fy = 64.0/img_swapped.shape[2])
         self.data = temp.copy()
         print "final shape:" ,self.data.shape
+        # p = np.random.permutation(range(self.data.shape[0]))
+        # self.data = self.data[p]
+        # self.labels = self.labels[p]
         np.random.shuffle(self.data)
         self.curIdx = 0
         print "Data Loaded and Pre Processed Successfully!"
+    
+    # def create_sample_set(self, num_per_class):
+    #     res = np.empty((0, 64, 64, 3))
+    #     for i in range(10):
+    #         res = np.append(res, self.data[self.labels == i][:10], axis=0)
+    #     return res
     
     def unpickle(self, file):
         import cPickle
