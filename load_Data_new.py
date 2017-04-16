@@ -34,18 +34,18 @@ class DataLoader:
             temp[index] = cv2.resize(img_swapped[index], None, fx = 64.0/img_swapped.shape[1], fy = 64.0/img_swapped.shape[2])
         self.data = temp.copy()
         print "final shape:" ,self.data.shape
-        # p = np.random.permutation(range(self.data.shape[0]))
-        # self.data = self.data[p]
-        # self.labels = self.labels[p]
-        np.random.shuffle(self.data)
+        p = np.random.permutation(range(self.data.shape[0]))
+        self.data = self.data[p]
+        self.labels = self.labels[p]
+        # np.random.shuffle(self.data)
         self.curIdx = 0
         print "Data Loaded and Pre Processed Successfully!"
     
-    # def create_sample_set(self, num_per_class):
-    #     res = np.empty((0, 64, 64, 3))
-    #     for i in range(10):
-    #         res = np.append(res, self.data[self.labels == i][:10], axis=0)
-    #     return res
+    def create_sample_set(self, num_per_class):
+        res = np.empty((0, 64, 64, 3))
+        for i in range(10):
+            res = np.append(res, self.data[self.labels == i][:num_per_class], axis=0)
+        return res
     
     def unpickle(self, file):
         import cPickle

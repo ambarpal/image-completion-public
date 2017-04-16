@@ -10,7 +10,7 @@ def evaluate(Xsamples, gen_Images):
             if(dist < minDist or minDist is None):
                 minDist = dist
         dists += [minDist]
-    return np.log(np.mean(np.array(dists)))        
+    return np.mean(np.array(dists))
 
 def lrelu(x=None, alpha=0.2, name="LeakyReLU"):
     with tf.name_scope(name) as scope:

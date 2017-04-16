@@ -68,7 +68,7 @@ if __name__ == '__main__':
     saver = tf.train.Saver(max_to_keep=2)
     merged = tf.summary.merge_all()
     
-    # Xsample_val_set = loader.create_sample_set(10)
+    Xsample_val_set = loader.create_sample_set(100)
     
     with tf.Session() as sess:
         # saver = tf.train.import_meta_graph('saved_analysis_snapshots/snapshots_cifar_complete_from_60_epoch_G_twice/it_2500.ckpt.meta')
@@ -117,7 +117,7 @@ if __name__ == '__main__':
                 X_sample_all = loader.load_batch_X(100, update_iterator = False)
                 im_samples, im_score = sess.run(fetches=[GZ, DGZ], feed_dict={Z:Z_sample_all})
                 im_samples = d3_scale(im_samples, out_range=(0,255))
-                # print "evaluation : %d" % evaluate(Xsample_val_set, im_samples) 
+                print "evaluation : %d" % evaluate(Xsample_val_set, im_samples) 
                 im_samples = save_sample_images(im_samples, 100)
                 
                 out = sess.run(im_samples)
