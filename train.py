@@ -10,7 +10,9 @@ import os
 np.random.seed(123)
 tf.set_random_seed(811)
 
-restore = True
+# restore = True
+restore = False
+
     # Do not set scopes with the loss as a name as we need to share the discriminator instead
     # of making multiple copies
 
@@ -52,11 +54,12 @@ if __name__ == '__main__':
     
     optimizer_gen = tf.train.AdamOptimizer(learning_rate=2e-4, beta1 = 0.5)
     train_op_gen = optimizer_gen.minimize(loss_gen, var_list=tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, "gen"))
-    
-    TAG = 'plotting-graphs'
-    
-    DATASET = 'CIFAR10'
+        
+    # DATASET = 'CIFAR10'
     # DATASET = 'MNIST'
+    # DATASET = 'CELEBA'
+    DATASET = 'SVHN'
+    
     loader = load_Data_new.DataLoader(DATASET)
     
     data_size = loader.get_data_size()
@@ -76,11 +79,32 @@ if __name__ == '__main__':
         batch_size = 64
         save_checkpoint_every = 250
         generate_samples_every = 100
+        flip_alpha = 0.2
+    
+    elif DATASET == 'CELEBA':
+        num_train_epochs = 15
+        num_disc_steps = 1
+        num_gen_steps = 1
+        batch_size = 64
+        save_checkpoint_every = 250
+        generate_samples_every = 100
         flip_alpha = 0.3
+        
+    elif DATASET == 'SVHN':
+        num_train_epochs = 15
+        num_disc_steps = 1
+        num_gen_steps = 1
+        batch_size = 64
+        save_checkpoint_every = 250
+        generate_samples_every = 100
+        flip_alpha = 0.3
+
+    TAG = 'plotting-graphs_alpha_'+str(flip_alpha)+'_'+DATASET
     
     saver = tf.train.Saver(max_to_keep=2)
     
-    Xsample_val_set = loader.create_sample_set(100)
+    if(DATASET != 'CELEBA'):
+        Xsample_val_set = loader.create_sample_set(100)
     
     sess = tf.InteractiveSession()
     # saver = tf.train.import_meta_graph('saved_analysis_snapshots/snapshots_cifar_complete_from_60_epoch_G_twice/it_2500.ckpt.meta')
@@ -89,9 +113,15 @@ if __name__ == '__main__':
     train_writer = tf.summary.FileWriter('logs/' + TAG, sess.graph)
 
     if(restore):
-        saver = tf.train.import_meta_graph('logs/' + TAG + 'model.meta')
-        saver.restore(sess, tf.train.latest_checkpoint('logs/' + TAG + '/'))
+        snapshot_name = tf.train.latest_checkpoint('logs/' + TAG + '/')
+        saver = tf.train.import_meta_graph(snapshot_name + '.meta')
+        print snapshot_name
+        start_iter = int(snapshot_name.split('-')[-1].split('.')[0])
+        print start_iter
+        saver.restore(sess, snapshot_name)
+        
     else:
+        start_iter = 0
         sess.run(tf.global_variables_initializer())
     
     num_train_iter = num_train_epochs * (data_size / (batch_size * num_disc_steps))
@@ -100,7 +130,7 @@ if __name__ == '__main__':
     sum_g_loss, num_g_loss = 0, 0
     sum_d_loss, num_d_loss = 0, 0
     
-    for iteration in range(num_train_iter):
+    for iteration in range(start_iter, num_train_iter):
         for disc_step in range(num_disc_steps):
             X_feed = loader.load_batch_X(batch_size)
             Z_feed = loader.load_batch_Z(batch_size)
@@ -126,6 +156,8 @@ if __name__ == '__main__':
             # save_name = "snapshots/it_%d.ckpt" % iteration
             if not os.path.isdir('logs/' + TAG):
                 os.makedirs('logs/' + TAG)
+            if not os.path.isdir('analysis/' + TAG):
+                os.makedirs('analysis/' + TAG)
             save_name = 'logs/' + TAG + '/model.ckpt'
             saver.save(sess, save_name, iteration)
             print "Snapshot saved to %s" % save_name
@@ -134,20 +166,20 @@ if __name__ == '__main__':
             X_sample_all = loader.load_batch_X(100, update_iterator = False)
             im_samples, im_score = sess.run(fetches=[GZ, DGZ], feed_dict={Z:Z_sample_all})
             im_samples = d3_scale(im_samples, out_range=(0,255))
-            print "evaluation : %d" % evaluate(Xsample_val_set, im_samples) 
+            # print "evaluation : %d" % evaluate(Xsample_val_set, im_samples) 
             im_samples = save_sample_images(im_samples, 100)
             
             out = sess.run(im_samples)
             out = cv2.cvtColor(out, cv2.COLOR_RGB2BGR)
-            cv2.imwrite("analysis/generator_sample_%d.png" % iteration, out)
-            cv2.imwrite("analysis/generator_latest.png", out)
+            cv2.imwrite("analysis/"+TAG+"/generator_sample_%d.png" % iteration, out)
+            cv2.imwrite("analysis/"+TAG+"/generator_latest.png", out)
             
             X_score = sess.run(fetches=[DX], feed_dict={X:X_sample_all})
             X_samples = save_sample_images(d3_scale(X_sample_all, out_range=(0,255)), 100)
             out = sess.run(X_samples)
             out = cv2.cvtColor(out, cv2.COLOR_RGB2BGR)
-            cv2.imwrite("analysis/orig_%d.png" % iteration, out)
-            cv2.imwrite("analysis/orig_latest.png", out)
+            cv2.imwrite("analysis/"+TAG+"/orig_%d.png" % iteration, out)
+            cv2.imwrite("analysis/"+TAG+"/orig_latest.png", out)
             
             print "Sample scores: \tDGZ:%f\tDX:%f" % (np.mean(im_score), np.mean(X_score))
 

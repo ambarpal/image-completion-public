@@ -3,6 +3,7 @@ import cv2
 from helper import normalize_batch
 from tensorflow.examples.tutorials.mnist import input_data
 import pdb
+import scipy.io as sio
 
 class DataLoader:
     def __init__(self, dataset_name='MNIST'):
@@ -17,7 +18,7 @@ class DataLoader:
                 temp[:,i,:,:] = self.data.copy()
             self.data = temp 
             
-        if(dataset_name == 'CIFAR10'):
+        elif (dataset_name == 'CIFAR10'):
             self.data = np.empty((0,3072))
             self.labels = np.empty((0))
             for i in range(1,6):
@@ -25,19 +26,37 @@ class DataLoader:
                 self.data = np.append(self.data, unpickled['data'],axis=0)
                 self.labels = np.append(self.labels, np.asarray(unpickled['labels']))
             self.data = self.data.reshape(-1,3,32,32)
+
+        elif (dataset_name == 'CELEBA'):
+            num_images = 202599
+            self.data = np.zeros((num_images,64,64,3))
+            for i in range(1,num_images+1):
+                img_ = cv2.imread('./data/celebA/%06d.jpg'%i)
+                self.data[i-1] = cv2.resize(img_, None, fx=64.0/img_.shape[1], fy=64.0/img_.shape[0])
+            np.random.shuffle(self.data)
+
+        elif (dataset_name == 'SVHN'):
+            dataset = sio.loadmat('./data/SVHN/train_32x32.mat')
+            self.data = dataset['X']
+            self.data = np.swapaxes(self.data, 0, 3)
+            self.data = np.swapaxes(self.data, 1, 2)
+            self.data = np.swapaxes(self.data, 2, 3)
+            
+            self.labels = np.reshape(dataset['y'], (dataset['y'].shape[0],))
+            
         print "pre processing data..."
         print "loaded data:", self.data.shape
-        img_swapped = np.swapaxes(self.data[:], 1, 3).swapaxes(1, 2)
-        temp = np.zeros((self.data.shape[0], 64, 64, 3))
-        print  "swapped axes:", img_swapped.shape
-        for index in range(self.data.shape[0]):
-            temp[index] = cv2.resize(img_swapped[index], None, fx = 64.0/img_swapped.shape[1], fy = 64.0/img_swapped.shape[2])
-        self.data = temp.copy()
-        print "final shape:" ,self.data.shape
-        p = np.random.permutation(range(self.data.shape[0]))
-        self.data = self.data[p]
-        self.labels = self.labels[p]
-        # np.random.shuffle(self.data)
+        if(dataset_name != 'CELEBA'):
+            img_swapped = np.swapaxes(self.data[:], 1, 3).swapaxes(1, 2)
+            print  "swapped axes:", img_swapped.shape
+            temp = np.zeros((self.data.shape[0], 64, 64, 3))
+            for index in range(self.data.shape[0]):
+                temp[index] = cv2.resize(img_swapped[index], None, fx = 64.0/img_swapped.shape[1], fy = 64.0/img_swapped.shape[2])
+            self.data = temp.copy()
+            print "final shape:" ,self.data.shape
+            p = np.random.permutation(range(self.data.shape[0]))
+            self.data = self.data[p]
+            self.labels = self.labels[p]
         self.curIdx = 0
         print "Data Loaded and Pre Processed Successfully!"
     
