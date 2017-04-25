@@ -56,9 +56,9 @@ if __name__ == '__main__':
     train_op_gen = optimizer_gen.minimize(loss_gen, var_list=tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, "gen"))
         
     # DATASET = 'CIFAR10'
-    # DATASET = 'MNIST'
+    DATASET = 'MNIST'
     # DATASET = 'CELEBA'
-    DATASET = 'SVHN'
+    # DATASET = 'SVHN'
     
     loader = load_Data_new.DataLoader(DATASET)
     
@@ -88,7 +88,7 @@ if __name__ == '__main__':
         batch_size = 64
         save_checkpoint_every = 250
         generate_samples_every = 100
-        flip_alpha = 0.3
+        flip_alpha = 0.2
         
     elif DATASET == 'SVHN':
         num_train_epochs = 15
@@ -116,7 +116,7 @@ if __name__ == '__main__':
         snapshot_name = tf.train.latest_checkpoint('logs/' + TAG + '/')
         saver = tf.train.import_meta_graph(snapshot_name + '.meta')
         print snapshot_name
-        start_iter = int(snapshot_name.split('-')[-1].split('.')[0])
+        start_iter = int(snapshot_name.split('-')[-1].split('.')[0]) + 1
         print start_iter
         saver.restore(sess, snapshot_name)
         
@@ -156,13 +156,13 @@ if __name__ == '__main__':
             # save_name = "snapshots/it_%d.ckpt" % iteration
             if not os.path.isdir('logs/' + TAG):
                 os.makedirs('logs/' + TAG)
-            if not os.path.isdir('analysis/' + TAG):
-                os.makedirs('analysis/' + TAG)
             save_name = 'logs/' + TAG + '/model.ckpt'
             saver.save(sess, save_name, iteration)
             print "Snapshot saved to %s" % save_name
         
         if iteration % generate_samples_every == 0:
+            if not os.path.isdir('analysis/' + TAG):
+                os.makedirs('analysis/' + TAG)
             X_sample_all = loader.load_batch_X(100, update_iterator = False)
             im_samples, im_score = sess.run(fetches=[GZ, DGZ], feed_dict={Z:Z_sample_all})
             im_samples = d3_scale(im_samples, out_range=(0,255))
@@ -170,14 +170,16 @@ if __name__ == '__main__':
             im_samples = save_sample_images(im_samples, 100)
             
             out = sess.run(im_samples)
-            out = cv2.cvtColor(out, cv2.COLOR_RGB2BGR)
+            if DATASET != 'CELEBA':
+                out = cv2.cvtColor(out, cv2.COLOR_RGB2BGR)
             cv2.imwrite("analysis/"+TAG+"/generator_sample_%d.png" % iteration, out)
             cv2.imwrite("analysis/"+TAG+"/generator_latest.png", out)
             
             X_score = sess.run(fetches=[DX], feed_dict={X:X_sample_all})
             X_samples = save_sample_images(d3_scale(X_sample_all, out_range=(0,255)), 100)
             out = sess.run(X_samples)
-            out = cv2.cvtColor(out, cv2.COLOR_RGB2BGR)
+            if DATASET != 'CELEBA':
+                out = cv2.cvtColor(out, cv2.COLOR_RGB2BGR)
             cv2.imwrite("analysis/"+TAG+"/orig_%d.png" % iteration, out)
             cv2.imwrite("analysis/"+TAG+"/orig_latest.png", out)
             

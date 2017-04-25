@@ -96,3 +96,7 @@ class DataLoader:
         # batch_z = np.random.randint(low=0, high=255, size = (batch_size, 100))
         # batch_z = batch_z / np.linalg.norm(batch_z)
         return batch_z
+    
+    # def getCorruptedImage(self, M):
+    #     return M*self.data[np.random.randint(self.data.shape[0])]
+    
