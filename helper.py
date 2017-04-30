@@ -1,5 +1,7 @@
 import numpy as np
 import tensorflow as tf
+import cv2
+import pdb
 
 def evaluate(Xsamples, gen_Images):
     dists = []
@@ -41,10 +43,26 @@ def normalize_batch(x, out_range=(-1, 1)):
     # res = x / 255.0
     # print res
     return res
-
 def save_sample_images(images, size, n_row = 10, n_col = 10):
+    if size < n_row * n_col:
+        sq_size = 1
+        while sq_size * sq_size < size:
+            sq_size += 1
+        left = sq_size ** 2 - images.shape[0]
+        for ind in range(left):
+            images = np.append(images, np.zeros((1, 64, 64, 3)), axis = 0)
+        n_row = sq_size
+        n_col = sq_size
+        size = sq_size**2
     images = [image for image in tf.split(images.astype(np.uint8), size, axis = 0)]
     rows = []
     for i in range(n_row):
         rows.append(tf.concat(images[n_col*i + 0: n_col*i + n_col],2))
     return tf.squeeze(tf.concat(rows,1),[0])
+
+def write_Image(img, path, batch_size, sess):
+    im_samples = d3_scale(img, out_range=(0, 255))
+    im_samples = save_sample_images(im_samples, batch_size)
+    out = sess.run(im_samples)
+    cv2.imwrite(path, out)
+    return out

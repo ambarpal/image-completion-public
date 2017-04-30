@@ -33,10 +33,20 @@ if __name__ == '__main__':
     
     with tf.variable_scope("loss_calculation"):
         # using Sigmoid Cross Entropy as loss function
+        # discriminator tries to discriminate between X and GZ:
+        #  if input to discriminator is X then output prob should be 0
+        #  if input to discriminator is GZ then output prob should be 1         
+        # loss_d_fake = log(1-DGZ_raw)        
         loss_d_fake = tf.nn.sigmoid_cross_entropy_with_logits(labels=labels_d_fake, logits=DGZ_raw)
+        # loss_d_real = log(DX_raw)         
         loss_d_real = tf.nn.sigmoid_cross_entropy_with_logits(labels=labels_d_real, logits=DX_raw)
         loss_g = tf.nn.sigmoid_cross_entropy_with_logits(labels=tf.ones_like(DGZ_raw), logits=DGZ_raw)
+        # loss_disc = log(1-DGZ_raw) + log(DX_raw)         
         loss_disc = tf.reduce_mean(loss_d_fake + loss_d_real)
+        # gen tries to fool D
+        #  that is D should output 0 on seeing GZ
+        #  therefore we minimize DGZ-raw(to make it 0)
+        # loss_gen = log(DGZ_raw)        
         loss_gen = tf.reduce_mean(loss_g)
 
     GZ_summary = tf.summary.image('GZ', GZ, max_outputs = 10)
