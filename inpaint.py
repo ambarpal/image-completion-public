@@ -10,28 +10,6 @@ import os
 np.random.seed(123)
 tf.set_random_seed(811)
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--dataset", help="dataset name on which inpainting has to be trained", type=str, choices=['CIFAR10', 'MNIST', 'CELEBA', 'SVHN'], default='MNIST')
-    parser.add_argument("--trained_model",help="Trained DCGAN model", type=str)
-    parser.add_argument("--lbd",help="(lambda)weight of perceptual loss", type=int, default=0.1)
-    parser.add_argument("--mode", help="Type of blackout that can be created - [Random, box] blackout", type=int, choice=['1','2'], default=2)
-    parser.add_argument("--random_blackout", help="Percentage of random blackout", type=int, choice=['1','2'], default=0)
-    parser.add_argument("--tag", help="Name of the Folder where you want to save the trained model", type=str, default="INPAINT")    
-    parser.add_argument("--learning_rate", help="learning rate of the optimizer", type=float, default=0.01)
-    parser.add_argument("--beta1", help="beta of adam optimizer", type=float, default=0.9)
-    parser.add_argument("--momentum", help="momentum of momentum optimizer", type=float, default=0.02)
-    
-    parser.add_argument("--optimizer", help="Type of optimizer", type=str, default='adam',choice=['adam', 'momentum'])
-    parser.add_argument("--num_train_iterations", type=int, help="number of training iterations", default=20000)
-    parser.add_argument("--batch_size", type=int, help="batch size", default=100)
-    parser.add_argument("--save_checkpoint_every", type=int, help="number of iterations after which a checkpoint is saved", default=250)
-    parser.add_argument("--samples_images_every", type=int, help="number of iterations after which a sample is generated", default=100)
-    parser.add_argument("--restore_from_full_ckpt", type=bool, help="Restore model from a previously saved checkpoint", default=False)
-    
-    args, unparsed = parser.parse_known_args()
-    
-    main(args)
 def main(args):    
     loader = load_Data_new.DataLoader(args.dataset)
     batch_size = min(args.batch_size, loader.get_dataset_length())
@@ -128,3 +106,24 @@ def main(args):
         
     train_writer.close()
 
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--dataset", help="dataset name on which inpainting has to be trained", type=str, choices=['CIFAR10', 'MNIST', 'CELEBA', 'SVHN'], default='MNIST')
+    parser.add_argument("--trained_model",help="Trained DCGAN model", type=str)
+    parser.add_argument("--lbd",help="(lambda)weight of perceptual loss", type=int, default=0.1)
+    parser.add_argument("--mode", help="Type of blackout that can be created - [Random, box] blackout", type=int, choice=['1','2'], default=2)
+    parser.add_argument("--random_blackout", help="Percentage of random blackout", type=int, choice=['1','2'], default=0)
+    parser.add_argument("--tag", help="Name of the Folder where you want to save the trained model", type=str, default="INPAINT")    
+    parser.add_argument("--optimizer", help="Type of optimizer", type=str, default='adam',choice=['adam', 'momentum'])
+    parser.add_argument("--learning_rate", help="learning rate of the optimizer", type=float, default=0.01)
+    parser.add_argument("--beta1", help="beta of adam optimizer", type=float, default=0.9)
+    parser.add_argument("--momentum", help="momentum of momentum optimizer", type=float, default=0.02)
+    parser.add_argument("--num_train_iterations", type=int, help="number of training iterations", default=20000)
+    parser.add_argument("--batch_size", type=int, help="batch size", default=100)
+    parser.add_argument("--save_checkpoint_every", type=int, help="number of iterations after which a checkpoint is saved", default=250)
+    parser.add_argument("--samples_images_every", type=int, help="number of iterations after which a sample is generated", default=100)
+    parser.add_argument("--restore_from_full_ckpt", type=bool, help="Restore model from a previously saved checkpoint", default=False)
+    
+    args, unparsed = parser.parse_known_args()
+    
+    main(args)
