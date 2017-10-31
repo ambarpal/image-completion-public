@@ -6,31 +6,29 @@ from helper import d3_scale, save_sample_images, evaluate
 import cv2
 import pdb
 import os
+import argparse
 
 np.random.seed(123)
 tf.set_random_seed(811)
 
-# restore = True
-restore = False
-
-    # Do not set scopes with the loss as a name as we need to share the discriminator instead
-    # of making multiple copies
-
-if __name__ == '__main__':
-#     Create Placeholders for Data
+def main(DATASET, data_size, num_train_epochs, num_disc_steps, num_gen_steps, batch_size, save_checkpoint_every, generate_samples_every, flip_alpha, restore = False):
+    
+    loader = load_Data_new.DataLoader(DATASET)
+    
+    # Create Placeholders for Data
     X = tf.placeholder(tf.float32, shape = [None, 64, 64, 3])
     Z = tf.placeholder(tf.float32, shape = [None, 100])
     labels_d_fake = tf.placeholder(tf.float32)
     labels_d_real = tf.placeholder(tf.float32)
     
     with tf.variable_scope("gen"):
-        GZ = generator(Z)
+    GZ = generator(Z)
     
     with tf.variable_scope("disc") as scope:
         DGZ_raw, DGZ = discriminator(GZ)
         scope.reuse_variables()
         DX_raw, DX = discriminator(X)
-    
+        
     with tf.variable_scope("loss_calculation"):
         # using Sigmoid Cross Entropy as loss function
         # discriminator tries to discriminate between X and GZ:
@@ -58,56 +56,12 @@ if __name__ == '__main__':
     disc_merged = tf.summary.merge([DGZ_summary, DX_summary, loss_disc_summary, GZ_summary])
     gen_merged = tf.summary.merge([DGZ_summary, loss_gen_summary])
         
-#        Defined Optimizers for both Discriminator and Generator
+    # Defined Optimizers for both Discriminator and Generator
     optimizer_disc = tf.train.AdamOptimizer(learning_rate=2e-4, beta1 = 0.5)
     train_op_disc = optimizer_disc.minimize(loss_disc, var_list=tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, "disc"))
     
     optimizer_gen = tf.train.AdamOptimizer(learning_rate=2e-4, beta1 = 0.5)
     train_op_gen = optimizer_gen.minimize(loss_gen, var_list=tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, "gen"))
-        
-    # DATASET = 'CIFAR10'
-    DATASET = 'MNIST'
-    # DATASET = 'CELEBA'
-    # DATASET = 'SVHN'
-    
-    loader = load_Data_new.DataLoader(DATASET)
-    
-    data_size = loader.get_data_size()
-    if DATASET == 'MNIST':
-        num_train_epochs = 10
-        num_disc_steps = 1
-        num_gen_steps = 2
-        batch_size = 64
-        save_checkpoint_every = 250
-        generate_samples_every = 100
-        flip_alpha = 0.3
-
-    elif DATASET == 'CIFAR10':
-        num_train_epochs = 50
-        num_disc_steps = 1
-        num_gen_steps = 1
-        batch_size = 64
-        save_checkpoint_every = 250
-        generate_samples_every = 100
-        flip_alpha = 0.2
-    
-    elif DATASET == 'CELEBA':
-        num_train_epochs = 15
-        num_disc_steps = 1
-        num_gen_steps = 1
-        batch_size = 64
-        save_checkpoint_every = 250
-        generate_samples_every = 100
-        flip_alpha = 0.2
-        
-    elif DATASET == 'SVHN':
-        num_train_epochs = 15
-        num_disc_steps = 1
-        num_gen_steps = 1
-        batch_size = 64
-        save_checkpoint_every = 250
-        generate_samples_every = 100
-        flip_alpha = 0.3
 
     TAG = 'plotting-graphs_alpha_'+str(flip_alpha)+'_'+DATASET
     
@@ -196,3 +150,17 @@ if __name__ == '__main__':
             print "Sample scores: \tDGZ:%f\tDX:%f" % (np.mean(im_score), np.mean(X_score))
 
     train_writer.close()
+    
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--dataset", help="dataset name", type=str, choices=['CIFAR10', 'MNIST', 'CELEBA', 'SVHN'], default='MNIST')
+    parser.add_argument("--num_train_epochs", type=int, help="number of training epochs", default=10)
+    parser.add_argument("--num_disc_steps", type=int, help="number of discriminator training steps", default=1)
+    parser.add_argument("--num_gen_steps", type=int, help="number of generator training steps", default=2)
+    parser.add_argument("--batch_size", type=int, help="batch size", default=64)
+    parser.add_argument("--save_checkpoint_every", type=int, help="number of iterations after which a checkpoint is saved", default=250)
+    parser.add_argument("--generate_samples_every", type=int, help="number of iterations after which a sample is generated", default=100)
+    parser.add_argument("--flip_alpha", type=float, help="probability of flipping the label", default=0.3)
+    args = parser.parse_args()
+    
+    main(args.dataset, args.data_size, args.num_train_epochs, args.num_disc_steps, args.num_gen_steps, args.batch_size, args.save_checkpoint_every, args.generate_samples_every, args.flip_alpha)
