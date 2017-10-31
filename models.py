@@ -1,6 +1,12 @@
 import tensorflow as tf
 from helper import lrelu
-
+'''
+ Please refer to the following paper for detailed description of the DCGAN:
+ https://arxiv.org/pdf/1511.06434.pdf
+'''
+'''
+ Model description of the generator module of the DCGAN using tensorflow 
+'''
 def generator(x):
     fc = tf.layers.dense(inputs=x, units=4*4*1024, activation=None, name="projection",kernel_initializer = tf.contrib.layers.xavier_initializer())
     fc = tf.reshape(fc,[-1,4,4,1024])
@@ -23,6 +29,9 @@ def generator(x):
     
     return deconv4
 
+'''
+ Model description of the discriminator module of the DCGAN using tensorflow
+'''
 def discriminator(x):
     conv1 = tf.layers.conv2d(inputs=x, filters=64,
                             kernel_size=5, strides=2, padding="same", activation=None, name="conv1",kernel_initializer = tf.contrib.layers.xavier_initializer())
