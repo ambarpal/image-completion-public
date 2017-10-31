@@ -9,7 +9,7 @@ We will first train a GAN on the original data distribution and then use the tra
 
 To run:
 	* First download the required dataset
-	* Then preprocess the dataset if required to size 64x64x3. [However load_Data_new.py performs the needed preprocessing!]
+	* Then preprocess the dataset if required to size 64x64x3. (However load_Data_new.py performs the needed preprocessing!)
 	* Train DCGAN on that dataset and save the trained model
 	* To inpaint, pass the location of the trained DCGAN model into ``inpaint.py`` and also modify the other required arguments for the best results
 
@@ -25,10 +25,6 @@ To run:
         
   * ``python --dataset 'SVHN' --num_train_epochs 15 --num_disc_steps 1 --num_gen_steps 1 --batch_size 64 --save_checkpoint_every 250 --generate_samples_every 100 --flip_alpha 0.3``
 
-
 ### Use the pretrained GAN to perform inpainting
   ``python inpaint.py``
   Modify the required arguments as you wish to train the model
-
-
-  
