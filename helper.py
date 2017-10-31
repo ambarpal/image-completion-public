@@ -2,7 +2,13 @@ import numpy as np
 import tensorflow as tf
 import cv2
 import pdb
-
+'''
+ This function evaluates your trained model, where Xsamples represent images
+ from your original data distribution and genSample are images generated using 
+ the GAN. For each image in genImage, this function finds the closest image in
+ the original data distribution by computing the euclidean distance between 
+ the two. We then return the mean of all the minDistance for each image in gen_Images 
+'''
 def evaluate(Xsamples, gen_Images):
     dists = []
     for y in gen_Images:
@@ -13,15 +19,16 @@ def evaluate(Xsamples, gen_Images):
                 minDist = dist
         dists += [minDist]
     return np.mean(np.array(dists))
-
+'''
+ Leaky relu activation function
+'''
 def lrelu(x=None, alpha=0.2, name="LeakyReLU"):
     with tf.name_scope(name) as scope:
-        # x = tf.nn.relu(x)
-        # m_x = tf.nn.relu(-x)
-        # x -= alpha * m_x
         x = tf.maximum(x, alpha * x)
     return x
-
+'''
+ This function scales the input Image (out) to the given range specified by the input argument (out_range)
+'''
 def d3_scale(dat, out_range=(-1, 1)):
     domain = [np.min(dat), np.max(dat)]
 
@@ -37,12 +44,16 @@ def d3_scale(dat, out_range=(-1, 1)):
         return (x - domain[0]) / b
 
     return interp(uninterp(dat))
-
+'''
+ This funciton normalizes the Input dataset images (x) to the range (-1, 1)
+'''
 def normalize_batch(x, out_range=(-1, 1)):
     res = d3_scale(x, out_range=out_range)
-    # res = x / 255.0
-    # print res
     return res
+
+'''
+ This function saves the images in a tile format 
+'''
 def save_sample_images(images, size, n_row = 10, n_col = 10):
     if size < n_row * n_col:
         sq_size = 1
@@ -60,6 +71,10 @@ def save_sample_images(images, size, n_row = 10, n_col = 10):
         rows.append(tf.concat(images[n_col*i + 0: n_col*i + n_col],2))
     return tf.squeeze(tf.concat(rows,1),[0])
 
+'''
+ This function rescales the image back to the range 0-255 and then writes converts 
+ the images to tile format and then writes that to disk
+'''
 def write_Image(img, path, batch_size, sess):
     im_samples = d3_scale(img, out_range=(0, 255))
     im_samples = save_sample_images(im_samples, batch_size)
